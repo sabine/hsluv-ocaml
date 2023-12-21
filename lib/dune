@@ -1,0 +1,3 @@
+(library
+ (name hsluv)
+ (public_name hsluv))

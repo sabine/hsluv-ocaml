@@ -1,0 +1,6 @@
+(test
+ (name test)
+ (modules test hsluv_reference)
+ (libraries hsluv yojson)
+ (preprocess
+  (pps ppx_yojson_conv)))
