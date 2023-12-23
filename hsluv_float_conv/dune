@@ -1,0 +1,4 @@
+(library
+ (name hsluv_float_conv)
+ (public_name hsluv.float_conv)
+ (libraries hsluv))

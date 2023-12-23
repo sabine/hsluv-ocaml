@@ -1,5 +1,7 @@
 (* Ported from https://github.com/hsluv/hsluv-go/blob/cff9eb7ee0694105b0250075bb56243b1651165e/hsluv.go *)
 
+include Types
+
 (* Constants *)
 let pi = Float.pi
 
@@ -103,18 +105,18 @@ let l_to_y l = if l <= 8.0 then l /. kappa else ((l +. 16.0) /. 116.0) ** 3.0
 
 (* Conversions *)
 
-let conv_xyz_luv (x, y, z) =
-  if y = 0.0 then (0.0, 0.0, 0.0)
+let conv_xyz_luv { x; y; z } =
+  if y = 0.0 then { l = 0.0; u = 0.0; v = 0.0 }
   else
     let l = y_to_l y in
     let var_u = 4.0 *. x /. (x +. (15.0 *. y) +. (3.0 *. z)) in
     let var_v = 9.0 *. y /. (x +. (15.0 *. y) +. (3.0 *. z)) in
     let u = 13.0 *. l *. (var_u -. ref_u) in
     let v = 13.0 *. l *. (var_v -. ref_v) in
-    (l, u, v)
+    { l; u; v }
 
-let conv_luv_xyz (l, u, v) =
-  if l = 0.0 then (0.0, 0.0, 0.0)
+let conv_luv_xyz { l; u; v } =
+  if l = 0.0 then { x = 0.0; y = 0.0; z = 0.0 }
   else
     let var_u = (u /. (13.0 *. l)) +. ref_u in
     let var_v = (v /. (13.0 *. l)) +. ref_v in
@@ -125,48 +127,48 @@ let conv_luv_xyz (l, u, v) =
     let z =
       ((9.0 *. y) -. (15.0 *. var_v *. y) -. (var_v *. x)) /. (3.0 *. var_v)
     in
-    (x, y, z)
+    { x; y; z }
 
-let conv_luv_lch (l, u, v) =
+let conv_luv_lch { l; u; v } =
   let c = sqrt ((u ** 2.0) +. (v ** 2.0)) in
   let h_rad = atan2 v u in
   let h =
     if c < 0.00000001 then 0.0
     else mod_float (h_rad *. 360.0 /. (2.0 *. pi)) 360.0
   in
-  (l, c, h)
+  { l; c; h }
 
-let conv_lch_luv (l, c, h) =
+let conv_lch_luv { l; c; h } =
   let h_rad = h /. 360.0 *. 2.0 *. pi in
   let u = cos h_rad *. c in
   let v = sin h_rad *. c in
-  (l, u, v)
+  { l; u; v }
 
-let conv_hsluv_lch (h, s, l) =
-  if l > 99.9999999 || l < 0.00000001 then (l, 0., h)
+let conv_hsluv_lch { h; s; l } =
+  if l > 99.9999999 || l < 0.00000001 then { l; c = 0.; h }
   else
     let max = max_chroma_for_lh l h in
-    (l, max /. 100.0 *. s, h)
+    { l; c = max /. 100.0 *. s; h }
 
-let conv_lch_hsluv (l, c, h) =
-  if l > 99.9999999 || l < 0.00000001 then (h, 0., l)
+let conv_lch_hsluv { l; c; h } =
+  if l > 99.9999999 || l < 0.00000001 then { h; s = 0.; l }
   else
     let max = max_chroma_for_lh l h in
-    (h, c /. max *. 100.0, l)
+    { h; s = c /. max *. 100.0; l }
 
-let conv_hpluv_lch (h, s, l) =
-  if l > 99.9999999 || l < 0.00000001 then (l, 0., h)
+let conv_hpluv_lch { h; p; l } =
+  if l > 99.9999999 || l < 0.00000001 then { l; c = 0.; h }
   else
     let max = max_safe_chroma_for_l l in
-    (l, max /. 100. *. s, h)
+    { l; c = max /. 100. *. p; h }
 
-let conv_lch_hpluv (l, c, h) =
-  if l > 99.9999999 || l < 0.00000001 then (h, 0., l)
+let conv_lch_hpluv { l; c; h } =
+  if l > 99.9999999 || l < 0.00000001 then { h; p = 0.; l }
   else
     let max = max_safe_chroma_for_l l in
-    (h, c /. max *. 100.0, l)
+    { h; p = c /. max *. 100.0; l }
 
-let conv_rgb_hex (r, g, b) =
+let conv_rgb_hex { r; g; b } =
   let rV = round (max 0.0 (min r 1.0) *. 255.0) in
   let gV = round (max 0.0 (min g 1.0) *. 255.0) in
   let bV = round (max 0.0 (min b 1.0) *. 255.0) in
@@ -181,49 +183,57 @@ let conv_hex_rgb hex =
   let rV = int_of_string ("0x" ^ String.sub hex 0 2) in
   let gV = int_of_string ("0x" ^ String.sub hex 2 2) in
   let bV = int_of_string ("0x" ^ String.sub hex 4 2) in
-  (float_of_int rV /. 255.0, float_of_int gV /. 255.0, float_of_int bV /. 255.0)
+  {
+    r = float_of_int rV /. 255.0;
+    g = float_of_int gV /. 255.0;
+    b = float_of_int bV /. 255.0;
+  }
 
-let conv_xyz_rgb (x, y, z) =
+let conv_xyz_rgb { x; y; z } =
   let r = from_linear (dot_product m.(0) [| x; y; z |]) in
   let g = from_linear (dot_product m.(1) [| x; y; z |]) in
   let b = from_linear (dot_product m.(2) [| x; y; z |]) in
-  (r, g, b)
+  { r; g; b }
 
-let conv_rgb_xyz (r, g, b) =
+let conv_rgb_xyz { r; g; b } =
   let r = to_linear r in
   let g = to_linear g in
   let b = to_linear b in
   let x = dot_product m_inv.(0) [| r; g; b |] in
   let y = dot_product m_inv.(1) [| r; g; b |] in
   let z = dot_product m_inv.(2) [| r; g; b |] in
-  (x, y, z)
+  { x; y; z }
 
-let conv_lch_rgb (l, c, h) =
-  conv_lch_luv (l, c, h) |> conv_luv_xyz |> conv_xyz_rgb
+let conv_lch_rgb { l; c; h } =
+  conv_lch_luv { l; c; h } |> conv_luv_xyz |> conv_xyz_rgb
 
-let conv_rgb_lch (r, g, b) =
-  conv_rgb_xyz (r, g, b) |> conv_xyz_luv |> conv_luv_lch
+let conv_rgb_lch { r; g; b } =
+  conv_rgb_xyz { r; g; b } |> conv_xyz_luv |> conv_luv_lch
 
-let conv_hsluv_rgb (h, s, l) = conv_hsluv_lch (h, s, l) |> conv_lch_rgb
-let conv_rgb_hsluv (r, g, b) = conv_rgb_lch (r, g, b) |> conv_lch_hsluv
+let conv_hsluv_rgb { h; s; l } = conv_hsluv_lch { h; s; l } |> conv_lch_rgb
+let conv_rgb_hsluv { r; g; b } = conv_rgb_lch { r; g; b } |> conv_lch_hsluv
 
 (* Hsluv and Hpluv *)
 
-let hsluv_to_hex (h, s, l) = conv_hsluv_rgb (h, s, l) |> conv_rgb_hex
+let hsluv_to_hex { h; s; l } = conv_hsluv_rgb { h; s; l } |> conv_rgb_hex
 let hsluv_from_hex hex = conv_hex_rgb hex |> conv_rgb_hsluv
 let hsluv_to_rgb = conv_hsluv_rgb
 let hsluv_from_rgb = conv_rgb_hsluv
 
-let hpluv_to_hex (h, s, l) =
-  (h, s, l) |> conv_hpluv_lch |> conv_lch_luv |> conv_luv_xyz |> conv_xyz_rgb
+let hpluv_to_hex { h; p; l } =
+  { h; p; l } |> conv_hpluv_lch |> conv_lch_luv |> conv_luv_xyz |> conv_xyz_rgb
   |> conv_rgb_hex
 
 let hpluv_from_hex hex =
   hex |> conv_hex_rgb |> conv_rgb_xyz |> conv_xyz_luv |> conv_luv_lch
   |> conv_lch_hpluv
 
-let hpluv_to_rgb (h, s, l) =
-  (h, s, l) |> conv_hpluv_lch |> conv_lch_luv |> conv_luv_xyz |> conv_xyz_rgb
+let hpluv_to_rgb { h; p; l } =
+  { h; p; l } |> conv_hpluv_lch |> conv_lch_luv |> conv_luv_xyz |> conv_xyz_rgb
 
-let hpluv_from_rgb (r, g, b) =
-  (r, g, b) |> conv_rgb_xyz |> conv_xyz_luv |> conv_luv_lch |> conv_lch_hpluv
+let hpluv_from_rgb { r; g; b } =
+  { r; g; b } |> conv_rgb_xyz |> conv_xyz_luv |> conv_luv_lch |> conv_lch_hpluv
+
+(* Pretty-printers *)
+
+include Pretty_printers
