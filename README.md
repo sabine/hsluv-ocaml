@@ -18,17 +18,32 @@ The HSLuv color space is particularly beneficial in scenarios where perceptual u
 
 4. **Digital Art and Image Processing**: Offers fine-tuning of colors for subtle and precise adjustments.
 
-5. **Color Grading in Film and Photography**: Facilitates harmonious color transitions and adjustments.
-
 In summary, HSLuv's appeal lies in its ability to provide visually consistent and natural-looking colors, making it suitable for design, data visualization, and artistic applications.
 
-## Implementation 
+## Implementation Notes
 
-This is a mostly faithful port of the Go implementation of hsluv.org at https://github.com/hsluv/hsluv-go.
+This started as a port of the [Go implementation of hsluv.org](https://github.com/hsluv/hsluv-go).
+
+The following color conversions are provided:
+
+| From/To      | HSLuv            | HPLuv            | RGB                 | XYZ                 | LUV                 | LCH                 | HEX                 |
+|--------------|------------------|------------------|---------------------|---------------------|---------------------|---------------------|---------------------|
+| **HSLuv**    | -                | -                | `hsluv_to_rgb`      | -                   | -                   | `conv_hsluv_lch`    | `hsluv_to_hex`      |
+| **HPLuv**    | -                | -                | `hpluv_to_rgb`      | -                   | -                   | `conv_hpluv_lch`    | `hpluv_to_hex`      |
+| **RGB**      | `hsluv_from_rgb` | `hpluv_from_rgb` | -                   | `conv_rgb_xyz`      | -                   | `conv_rgb_lch`      | `conv_rgb_hex`      |
+| **XYZ**      | -                | -                | `conv_xyz_rgb`      | -                   | `conv_xyz_luv`      | -                   | -                   |
+| **LUV**      | -                | -                | -                   | `conv_luv_xyz`      | -                   | `conv_luv_lch`      | -                   |
+| **LCH**      | `conv_lch_hsluv` | `conv_lch_hpluv` | `conv_lch_rgb`      | -                   | `conv_luv_lch`      | -                   | -                   |
+| **HEX**      | `hsluv_from_hex` | `hpluv_from_hex` | `conv_hex_rgb`      | -                   | -                   | -                   | -                   |
+
+In addition to the HSLuv and HPLuv conversion functions, this package also exposes
+- color conversion functions between the various color spaces used to enable the HSLuv and HPluv conversions
+- pretty printers `pp_hsluv`, `pp_hpluv`, etc.
+- a library `hsluv.float_conv` for conversions between float triples and the provided color types
 
 ## Tests
 
-The implementation is tested against the [hsluv snapshot (revision 4)](https://raw.githubusercontent.com/hsluv/hsluv/master/snapshots/snapshot-rev4.json). Test cases are included and can be run with
+The implementation is tested against the [hsluv snapshot (revision 4)](https://raw.githubusercontent.com/hsluv/hsluv/master/snapshots/snapshot-rev4.json). Tests for all conversion functions are included and can be run with
 
 ```
 opam exec -- dune test

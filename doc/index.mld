@@ -1,0 +1,21 @@
+{0 HSLuv}
+
+HSLuv is a color space designed to provide a more human-friendly and uniform representation of colors, compared to traditional color spaces like RGB or HSL.
+
+The key feature of HSLuv is its ability to maintain perceived color brightness and contrast uniformly across its hue and saturation range.
+
+HSLuv is particularly useful in applications where color consistency and perceptual uniformity are important, such as in graphical design, data visualization, and user interface development.
+
+You can find more information about HSLuv on {{: https://www.hsluv.org/}the official HSLuv website}.
+
+{1 Libraries}
+
+{2 hsluv}
+
+Module:
+- {!Hsluv} - HSLuv and HPLuv color models as well as other common color spaces like RGB and XYZ, modeled as record types; provides conversion functions between the different color spaces and pretty-printers for all the color types.
+
+{2 hsluv.float_conv}
+
+Module:
+- {!Hsluv_float_conv} - convert between the record types of the different color spaces defined in {!Hsluv} and float triple representations
